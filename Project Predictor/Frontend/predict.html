@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prediction Form</title>
+    <style>
+        /* General Reset */
+        body, h2, p, textarea, button {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Body Styling */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+            padding: 20px;
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            text-align: center;
+        }
+
+        /* Container to center all content */
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #007BFF;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        /* Textarea Styling */
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-bottom: 20px;
+            transition: border 0.3s;
+            resize: none;
+        }
+
+        textarea:focus {
+            border-color: #007BFF;
+        }
+
+        /* Button Styling */
+        button {
+            background-color: #007BFF;
+            color: white;
+            font-size: 16px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background-color: #aaa;
+            cursor: not-allowed;
+        }
+
+        /* Spinner Styling */
+        #loading {
+            display: none;
+            font-size: 18px;
+            color: #007BFF;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        /* Flex Layout for Button and Spinner */
+        .button-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #007BFF;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Prediction Results */
+        #prediction, #confidence {
+            font-size: 18px;
+            margin-top: 20px;
+            color: #333;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Project Hours Prediction</h2>
+        <p>Submit the name of a project to get a prediction of how many hours it will take.</p>
+        <!-- Text input field -->
+        <textarea id="textInput" rows="1" placeholder="Enter the name of the project here..."></textarea><br><br>
+
+        <!-- Submit button and spinner -->
+        <div class="button-container">
+            <button onclick="submitText()">Submit</button>
+            <div id="loading" class="spinner"></div>
+        </div>
+
+        <!-- Prediction results -->
+        <p id="prediction"></p>
+        <p id="confidence"></p>
+    </div>
+
+    <script>
+        async function submitText() {
+            const text = document.getElementById('textInput').value;
+
+            if (!text) {
+                alert('Please enter some text');
+                return;
+            }
+
+            // Show loading spinner and disable the button
+            document.getElementById('loading').style.display = 'inline-block';
+            document.querySelector('button').disabled = true;
+
+            try {
+                const response = await fetch('https://pretty-hyena-hopelessly.ngrok-free.app/predict', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ text })
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    let predictedHours = parseFloat(result.norm).toFixed(1);
+                    document.getElementById('prediction').innerText = 'Predicted Hours: ' + predictedHours;
+                    document.getElementById('confidence').innerText = 'Confidence: ' + result.confidence;
+                } else {
+                    document.getElementById('prediction').innerText = 'Error: ' + result.error;
+                }
+            } catch (error) {
+                console.error('Request failed', error);
+                document.getElementById('prediction').innerText = 'Error: ' + error.message;
+            } finally {
+                // Hide loading spinner and enable the button
+                document.getElementById('loading').style.display = 'none';
+                document.querySelector('button').disabled = false;
+            }
+        }
+    </script>
+</body>
+</html>
